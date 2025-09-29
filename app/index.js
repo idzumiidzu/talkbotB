@@ -65,23 +65,42 @@ const recruitPosts = new Map(); // messageId -> { creatorId, roleId }
 
 
 client.on(Events.InteractionCreate, async interaction => {
-try {
-// スラッシュコマンド処理
-if (interaction.isChatInputCommand()) {
-if (interaction.commandName === 'setup-recruit-buttons') {
-const roles = [];
-for (let i = 1; i <= 3; i++) {
-const r = interaction.options.getRole(`role${i}`);
-if (r) roles.push(r);
-}
-if (!roles.length) return interaction.reply({ content: 'ロールを少なくとも1つ指定してください。', ephemeral: true });
+  try {
+    // スラッシュコマンド処理
+    if (interaction.isChatInputCommand()) {
+      if (interaction.commandName === 'setup-recruit-buttons') {
+        const roles = [];
+        for (let i = 1; i <= 3; i++) {
+          const r = interaction.options.getRole(`role${i}`);
+          if (r) roles.push(r);
+        }
+        if (!roles.length) {
+          return interaction.reply({ content: 'ロールを少なくとも1つ指定してください。', ephemeral: true });
+        }
 
+        const buttons = roles.map(role =>
+          new ButtonBuilder()
+            .setCustomId(`openModal:${role.id}`)
+            .setLabel(`${role.name} 募集`)
+            .setStyle(ButtonStyle.Primary)
+        );
+        const row = new ActionRowBuilder().addComponents(buttons);
 
-const buttons = roles.map(role =>
-new ButtonBuilder()
-.setCustomId(`openModal:${role.id}`)
-.setLabel(`${role.name} 募集`)
-.setStyle(ButtonStyle.Primary)
-);
-const row = new ActionRowBuilder().addComponents(buttons);
+        await interaction.reply({
+          content: '募集用のボタンを設置しました！',
+          components: [row]
+        });
+      }
+    }
+
+    // ここにボタン処理やモーダル処理も追加していく
+  } catch (err) {
+    console.error('Interaction error:', err);
+    if (interaction && !interaction.replied && !interaction.deferred) {
+      interaction.reply({ content: 'エラーが発生しました。', ephemeral: true }).catch(() => {});
+    }
+  }
+});
+
+// 🚀 最後に1回だけログイン
 client.login(TOKEN);
